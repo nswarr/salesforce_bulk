@@ -27,7 +27,7 @@ module SalesforceBulk
       headers = Hash['Content-Type' => 'application/xml; charset=utf-8']
 
       response = @@connection.post_xml(nil, path, xml, headers)
-      response_parsed = XmlSimple.xml_in(response)    
+      response_parsed = XmlSimple.xml_in(response)
 
       @@job_id = response_parsed['id'][0]
     end
@@ -49,7 +49,7 @@ module SalesforceBulk
     def add_query
       path = "job/#{@@job_id}/batch/"
       headers = Hash["Content-Type" => "text/csv; charset=UTF-8"]
-      
+
       response = @@connection.post_xml(nil, path, @@records, headers)
       response_parsed = XmlSimple.xml_in(response)
 
@@ -59,7 +59,7 @@ module SalesforceBulk
     def add_batch()
       keys = @@records.reduce({}) {|h,pairs| pairs.each {|k,v| (h[k] ||= []) << v}; h}.keys
       headers = keys.to_csv
-      
+
       output_csv = headers
 
       @@records.each do |r|
@@ -74,7 +74,7 @@ module SalesforceBulk
 
       path = "job/#{@@job_id}/batch/"
       headers = Hash["Content-Type" => "text/csv; charset=UTF-8"]
-      
+
       response = @@connection.post_xml(nil, path, output_csv, headers)
       response_parsed = XmlSimple.xml_in(response)
 
@@ -91,6 +91,12 @@ module SalesforceBulk
       begin
         #puts "check: #{response_parsed.inspect}\n"
         response_parsed['state'][0]
+
+        {
+            :state => response_parsed['state'][0],
+            :state_message => (response_parsed['stateMessage'][0] if response_parsed['stateMessage'])
+        }
+
       rescue Exception => e
         #puts "check: #{response_parsed.inspect}\n"
 
@@ -112,14 +118,22 @@ module SalesforceBulk
         headers = Hash.new
         headers = Hash["Content-Type" => "text/xml; charset=UTF-8"]
         #puts "path is: #{path}\n"
-        
+
         response = @@connection.get_request(nil, path, headers)
-        #puts "\n\nres2: #{response.inspect}\n\n"
+                                 #puts "\n\nres2: #{response.inspect}\n\n"
 
       end
 
       response = response.lines.to_a[1..-1].join
-      csvRows = CSV.parse(response)
+      CSV.parse(response).map do |row|
+        {
+            :id => row[0],
+            :success => row[1],
+            :created => row[2],
+            :error_message => row[3]
+        }
+      end
+
     end
 
   end

@@ -22,7 +22,7 @@ module SalesforceBulk
     def update(sobject, records)
       self.do_operation('update', sobject, records, nil)
     end
-    
+
     def create(sobject, records)
       self.do_operation('insert', sobject, records, nil)
     end
@@ -50,8 +50,9 @@ module SalesforceBulk
       job.close_job()
 
       while true
-        state = job.check_batch_status()
+        status = job.check_batch_status()
         #puts "\nstate is #{state}\n"
+        state = status[:state]
         if state != "Queued" && state != "InProgress"
           break
         end
@@ -59,11 +60,13 @@ module SalesforceBulk
       end
 
       if state == 'Completed'
-        job.get_batch_result()
-      else
-        return "error"
+        results = job.get_batch_result()
       end
 
+      {
+          :status => status,
+          :upsert_results => results
+      }
     end
 
   end  # End class

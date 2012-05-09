@@ -35,7 +35,7 @@ module SalesforceBulk
       xml += "    </n1:login>"
       xml += "  </env:Body>"
       xml += "</env:Envelope>"
-      
+
       headers = Hash['Content-Type' => 'text/xml; charset=utf-8', 'SOAPAction' => 'login']
 
       response = post_xml(@@LOGIN_HOST, @@LOGIN_PATH, xml, headers)
